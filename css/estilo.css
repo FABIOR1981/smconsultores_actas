@@ -1,0 +1,87 @@
+@import url('https://fonts.googleapis.com/css2?family=Montserrat:wght@400;500;800&display=swap');
+
+body {
+    margin: 0;
+    font-family: sans-serif;
+    background-color: #f0f0f0;
+}
+
+.contenedor-principal {
+    display: flex;
+    height: 100vh;
+    overflow: hidden;
+}
+
+/* --- PANEL IZQUIERDO --- */
+.panel-edicion {
+    width: 350px;
+    background: #fff;
+    padding: 20px;
+    border-right: 1px solid #ccc;
+    overflow-y: auto;
+}
+
+.grupo-input { margin-bottom: 15px; }
+.grupo-input label { display: block; font-size: 12px; font-weight: bold; margin-bottom: 5px; }
+.grupo-input input { width: 100%; padding: 8px; box-sizing: border-box; }
+.seccion-listas { margin-bottom: 20px; }
+.item-lista { display: flex; gap: 5px; margin-bottom: 5px; }
+.item-lista input { flex: 1; padding: 5px; }
+.botones-exportar { margin-top: 30px; display: flex; flex-direction: column; gap: 10px; }
+
+/* --- PANEL DERECHO (A4) --- */
+.panel-vista {
+    flex: 1;
+    overflow: auto;
+    padding: 20px;
+    display: flex;
+    justify-content: center;
+    align-items: flex-start;
+}
+
+#caja-preview { transform-origin: top left; }
+
+.acta {
+    position: relative;
+    width: 1545px;
+    height: 2183px; /* Proporción A4 */
+    background: #fff;
+    font-family: 'Montserrat', sans-serif;
+    color: #000;
+    box-sizing: border-box;
+    overflow: hidden;
+}
+
+/* POSICIONAMIENTO ABSOLUTO DE LOS PNGs (AJUSTA ESTOS VALORES SEGÚN TUS IMÁGENES) */
+.acta-deco-img { position: absolute; z-index: 0; pointer-events: none; }
+.deco-titulo { top: 120px; right: -50px; width: 350px; }
+.deco-temas { top: 480px; left: 80px; width: 380px; }
+.deco-pendientes { top: 1030px; left: 320px; width: 180px; }
+.deco-acciones { top: 1520px; left: 200px; width: 250px; }
+
+/* CONTENIDO DEL ACTA SOBRE LOS PNGs */
+.acta-cab, .sec, .acta-pie {
+    position: relative;
+    z-index: 1; /* Para que el texto quede por encima de los garabatos */
+}
+
+.acta-cab { margin-left: 528px; margin-top: 182px; }
+.acta-titulo { margin: 0; font-weight: 800; font-size: 75px; line-height: 75px; }
+.acta-meta { margin-top: 30px; font-weight: 500; font-size: 36px; }
+
+.sec { display: flex; padding-left: 155px; }
+.sec-1 { margin-top: 92px; }
+.sec-2 { margin-top: 59px; }
+.sec-3 { margin-top: 124px; }
+
+.sec-et { width: 400px; font-weight: 800; font-size: 34px; }
+.sec ul { width: 820px; margin: 0; padding: 0; list-style: none; display: flex; flex-direction: column; gap: 20px; }
+.sec li { position: relative; padding-left: 30px; font-size: 34px; line-height: 45px; text-align: justify; }
+.sec li::before { content: ''; position: absolute; left: 0; top: 15px; width: 14px; height: 14px; border-radius: 50%; background: #111; }
+
+.acta-pie { position: absolute; bottom: 80px; right: 80px; font-size: 30px; color: #8c8c8c; }
+
+@media print {
+    .no-print { display: none !important; }
+    .panel-vista { padding: 0; overflow: visible; }
+}

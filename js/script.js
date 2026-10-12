@@ -1,90 +1,118 @@
-// Sincronización en tiempo real999
-const campos = ['titulo', 'fecha', 'lugar', 'participantes', 'temas', 'acuerdos', 'firma1', 'firma2'];
-
-campos.forEach(campo => {
-    const input = document.getElementById(`in-${campo}`);
-    const output = document.getElementById(`out-${campo}`);
-    
-    input.addEventListener('input', (e) => {
-        let valor = e.target.value;
-        if(campo === 'fecha' && valor) {
-            // Formatear fecha a DD/MM/YYYY
-            const [y, m, d] = valor.split('-');
-            valor = `${d}/${m}/${y}`;
+document.addEventListener('DOMContentLoaded', () => {
+    // Configurar listeners en inputs estáticos
+    const inputs = ['fecha', 'titulo', 'consultoria', 'proceso', 'elabora'];
+    inputs.forEach(id => {
+        const elemento = document.getElementById(`input-${id}`);
+        if(elemento) {
+            elemento.addEventListener('input', actualizarTextos);
         }
-        output.innerText = valor || (campo.includes('firma') ? `Firma ${campo.slice(-1)}` : '_________________');
     });
+
+    // Escalar la vista previa para que entre en la pantalla
+    ajustarEscala();
+    window.addEventListener('resize', ajustarEscala);
+
+    // Cargar ítems por defecto
+    agregarItem('temas', 'Revisión de flujos de trabajo.');
+    agregarItem('pendientes', 'Actualizar documentación.');
+    agregarItem('acciones', 'Agendar próxima reunión.');
+    actualizarTextos();
 });
 
-// Poner fecha de hoy por defecto
-document.getElementById('in-fecha').valueAsDate = new Date();
-document.getElementById('in-fecha').dispatchEvent(new Event('input'));
+function ajustarEscala() {
+    const contenedor = document.querySelector('.panel-vista');
+    const escalaEl = document.getElementById('escala');
+    const anchoContenedor = contenedor.clientWidth - 40; // 40px de padding
+    
+    if (anchoContenedor < 1545) {
+        const ratio = anchoContenedor / 1545;
+        escalaEl.style.transform = `scale(${ratio})`;
+    } else {
+        escalaEl.style.transform = 'scale(1)';
+    }
+}
 
-// Exportar a PDF usando html2canvas y jsPDF
-window.exportarPDF = function() {
-    const doc = document.getElementById('document-preview');
-    html2canvas(doc, { scale: 2 }).then(canvas => {
-        const imgData = canvas.toDataURL('image/jpeg', 1.0);
-        const pdf = new jspdf.jsPDF({
-            orientation: 'portrait',
-            unit: 'mm',
-            format: 'a4'
+function actualizarTextos() {
+    document.getElementById('out-fecha').innerText = document.getElementById('input-fecha').value;
+    document.getElementById('out-titulo').innerText = document.getElementById('input-titulo').value;
+    document.getElementById('out-consultoria').innerText = document.getElementById('input-consultoria').value;
+    document.getElementById('out-proceso').innerText = document.getElementById('input-proceso').value;
+    document.getElementById('out-elabora').innerText = document.getElementById('input-elabora').value;
+}
+
+function agregarItem(seccion, valorDefecto = '') {
+    const editor = document.getElementById(`editor-${seccion}`);
+    const div = document.createElement('div');
+    div.className = 'item-lista';
+    
+    const input = document.createElement('input');
+    input.type = 'text';
+    input.value = valorDefecto;
+    input.className = `input-lista-${seccion}`;
+    input.addEventListener('input', renderizarListas);
+
+    const btnEliminar = document.createElement('button');
+    btnEliminar.innerText = 'X';
+    btnEliminar.onclick = function() {
+        div.remove();
+        renderizarListas();
+    };
+
+    div.appendChild(input);
+    div.appendChild(btnEliminar);
+    editor.appendChild(div);
+    
+    renderizarListas();
+}
+
+function renderizarListas() {
+    const secciones = ['temas', 'pendientes', 'acciones'];
+    secciones.forEach(seccion => {
+        const inputs = document.querySelectorAll(`.input-lista-${seccion}`);
+        const ul = document.getElementById(`out-${seccion}`);
+        ul.innerHTML = '';
+        
+        inputs.forEach(input => {
+            if (input.value.trim() !== '') {
+                const li = document.createElement('li');
+                li.innerText = input.value.trim();
+                ul.appendChild(li);
+            }
         });
-        
-        const pdfWidth = pdf.internal.pageSize.getWidth();
-        const pdfHeight = (canvas.height * pdfWidth) / canvas.width;
-        
-        pdf.addImage(imgData, 'JPEG', 0, 0, pdfWidth, pdfHeight);
-        pdf.save('Acta_Reunion.pdf');
     });
 }
 
-// Exportar a Word (Texto plano estructurado) usando docx
-window.exportarWord = function() {
-    const titulo = document.getElementById('out-titulo').innerText;
-    const fecha = document.getElementById('out-fecha').innerText;
-    const lugar = document.getElementById('out-lugar').innerText;
-    const participantes = document.getElementById('out-participantes').innerText;
-    const temas = document.getElementById('out-temas').innerText;
-    const acuerdos = document.getElementById('out-acuerdos').innerText;
-    const firma1 = document.getElementById('out-firma1').innerText;
-    const firma2 = document.getElementById('out-firma2').innerText;
+function exportarJPEG() {
+    const elemento = document.getElementById('acta-preview');
+    // Restaurar escala a 1 para capturar alta calidad
+    const escalaEl = document.getElementById('escala');
+    const transformOriginal = escalaEl.style.transform;
+    escalaEl.style.transform = 'scale(1)';
 
-    const doc = new docx.Document({
-        sections: [{
-            properties: {},
-            children: [
-                new docx.Paragraph({
-                    text: titulo,
-                    heading: docx.HeadingLevel.HEADING_1,
-                    alignment: docx.AlignmentType.CENTER,
-                }),
-                new docx.Paragraph({ text: "" }),
-                new docx.Paragraph({ text: `Fecha: ${fecha}`, bold: true }),
-                new docx.Paragraph({ text: `Lugar: ${lugar}`, bold: true }),
-                new docx.Paragraph({ text: `Participantes: ${participantes}`, bold: true }),
-                new docx.Paragraph({ text: "" }),
-                new docx.Paragraph({
-                    text: "1. Temas Tratados y Desarrollo",
-                    heading: docx.HeadingLevel.HEADING_2,
-                }),
-                new docx.Paragraph({ text: temas }),
-                new docx.Paragraph({ text: "" }),
-                new docx.Paragraph({
-                    text: "2. Acuerdos y Compromisos",
-                    heading: docx.HeadingLevel.HEADING_2,
-                }),
-                new docx.Paragraph({ text: acuerdos }),
-                new docx.Paragraph({ text: "" }),
-                new docx.Paragraph({ text: "" }),
-                new docx.Paragraph({ text: "Firmas:", bold: true }),
-                new docx.Paragraph({ text: `_______________________          _______________________` }),
-                new docx.Paragraph({ text: `${firma1}                                 ${firma2}` })
-            ],
-        }]
+    html2canvas(elemento, { scale: 1.5, useCORS: true }).then(canvas => {
+        const enlace = document.createElement('a');
+        enlace.download = 'Acta_Reunion.jpg';
+        enlace.href = canvas.toDataURL('image/jpeg', 0.95);
+        enlace.click();
+        escalaEl.style.transform = transformOriginal;
     });
+}
 
-    docx.Packer.toBlob(doc).then(blob => {
-        saveAs(blob, "Acta_Reunion.docx");
+function exportarPDF() {
+    const elemento = document.getElementById('acta-preview');
+    const escalaEl = document.getElementById('escala');
+    const transformOriginal = escalaEl.style.transform;
+    escalaEl.style.transform = 'scale(1)';
+
+    html2canvas(elemento, { scale: 1.5, useCORS: true }).then(canvas => {
+        const imgData = canvas.toDataURL('image/jpeg', 0.95);
+        const pdf = new jspdf.jsPDF('p', 'mm', 'a4');
+        const anchoPdf = pdf.internal.pageSize.getWidth();
+        const altoPdf = (canvas.height * anchoPdf) / canvas.width;
+        
+        pdf.addImage(imgData, 'JPEG', 0, 0, anchoPdf, altoPdf);
+        pdf.save('Acta_Reunion.pdf');
+        
+        escalaEl.style.transform = transformOriginal;
     });
 }
