@@ -3,144 +3,415 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Generador de Actas de Reunión</title>
-    <!-- Tailwind CSS para los estilos del panel -->
+    <title>Generador Profesional de Actas de Reunión</title>
     <script src="https://cdn.tailwindcss.com"></script>
-    <!-- Fuentes de Google -->
-    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600&family=Montserrat:ital,wght@0,300;0,400;0,600;1,400&display=swap" rel="stylesheet">
-    <!-- FontAwesome para iconos -->
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=Montserrat:wght@300;400;500;800&family=Open+Sans:wght@400&display=swap" rel="stylesheet">
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
-    
-    <!-- Librerías para exportar a PDF y Word -->
     <script src="https://cdnjs.cloudflare.com/ajax/libs/html2canvas/1.4.1/html2canvas.min.js"></script>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
-    <script src="https://unpkg.com/docx@7.3.0/build/index.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/docx/7.8.2/docx.min.js"></script>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/FileSaver.js/2.0.5/FileSaver.min.js"></script>
 
-    <!-- Archivo de estilos -->
-    <link rel="stylesheet" href="css/style.css">
+    <style>
+        body { font-family: 'Inter', sans-serif; background-color: #f3f4f6; }
+
+        /* ===== HOJA A4 ===== */
+        .acta {
+            position: relative;
+            width: 1545px;
+            min-height: 2183px;
+            background: #fff;
+            box-sizing: border-box;
+            display: flex;
+            flex-direction: column;
+            overflow: hidden;
+            font-family: 'Montserrat', sans-serif;
+            color: #000;
+        }
+        .acta, .acta * { box-sizing: border-box; margin: 0; padding: 0; }
+        .acta-deco { position: absolute; left: 0; top: 0; width: 1545px; height: 100%; z-index: 0; overflow: hidden; pointer-events: none; }
+        
+        /* Posicionamiento de los PNGs (Garabatos) */
+        .acta-deco-img { position: absolute; z-index: 0; display: none; pointer-events: none; }
+        #img-deco-titulo { top: 120px; right: -50px; width: 350px; }
+        #img-deco-temas { top: 480px; left: 80px; width: 380px; }
+        #img-deco-pendientes { top: 1030px; left: 320px; width: 180px; }
+        #img-deco-acciones { top: 1520px; left: 200px; width: 250px; }
+
+        .acta-logo { display: block; position: absolute; left: 54px; top: 40px; width: 240px; height: auto; z-index: 10; max-height: 150px; object-fit: contain; }
+
+        .acta-cab { position: relative; margin-left: 528px; margin-top: 182px; }
+        .acta-titulo { position: relative; z-index: 1; margin: 0; font-weight: 800; font-size: 75px; line-height: 75px; color: #000; }
+        .acta-meta { position: relative; z-index: 1; margin-top: 30.5px; font-weight: 500; font-size: 36.6px; line-height: 49px; color: #111; }
+        .acta-meta p { margin: 0; padding-bottom: 10px; }
+
+        .sec { position: relative; display: flex; align-items: flex-start; padding-left: 155px; }
+        .sec-1 { margin-top: 92.5px; }
+        .sec-2 { margin-top: 59px; }
+        .sec-3 { margin-top: 124px; }
+        .sec-et { position: relative; z-index: 1; flex: none; width: 400px; font-weight: 800; font-size: 34.4px; line-height: 45.5px; color: #000; }
+        .sec-2 .sec-et { margin-top: 16px; }
+        .sec-3 .sec-et { margin-top: -31px; }
+        .sec ul { position: relative; z-index: 1; flex: none; width: 820px; margin: 0; padding: 0; list-style: none; display: flex; flex-direction: column; gap: 20px; }
+        .sec li { position: relative; padding-left: 30px; margin: 0; font-weight: 400; font-size: 34.1px; line-height: 45.5px; text-align: justify; color: #1a1a1a; }
+        .sec li::before { content: ''; position: absolute; left: 0; top: 15.5px; width: 14px; height: 14px; border-radius: 50%; background: #111; }
+
+        .acta-pie { margin-top: auto; align-self: flex-end; margin-right: 42px; margin-bottom: 33px; padding-top: 70px; font-family: 'Open Sans', sans-serif; font-weight: 400; font-size: 30.3px; color: #8c8c8c; }
+
+        #caja-preview { width: 100%; overflow: hidden; display: flex; justify-content: center; }
+        #escala { box-shadow: 0 10px 25px -5px rgba(0,0,0,.15), 0 8px 10px -6px rgba(0,0,0,.1); transform-origin: top center; }
+
+        @media print {
+            body { background: none; }
+            .no-print { display: none !important; }
+            #caja-preview { overflow: visible; }
+            #escala { transform: scale(1) !important; box-shadow: none; }
+        }
+        ::-webkit-scrollbar { width: 8px; height: 8px; }
+        ::-webkit-scrollbar-track { background: #e5e7eb; }
+        ::-webkit-scrollbar-thumb { background: #9ca3af; border-radius: 4px; }
+    </style>
 </head>
-<body class="h-screen flex overflow-hidden">
+<body class="min-h-screen flex flex-col text-slate-800">
 
-    <!-- PANEL LATERAL IZQUIERDO (Formulario) -->
-    <div class="w-1/3 bg-white border-r border-gray-200 flex flex-col h-full shadow-lg z-10">
-        <div class="p-6 bg-blue-600 text-white">
-            <h1 class="text-xl font-bold"><i class="fas fa-file-signature mr-2"></i>Generador de Actas</h1>
-            <p class="text-sm opacity-80 mt-1">Completa los datos para generar el documento</p>
+    <header class="bg-slate-900 text-white shadow-md sticky top-0 z-50 no-print">
+        <div class="max-w-7xl mx-auto px-4 py-3 flex flex-wrap justify-between items-center gap-4">
+            <div class="flex items-center space-x-3">
+                <div class="w-10 h-10 rounded-lg bg-amber-500/20 border border-amber-500/40 flex items-center justify-center text-amber-400 font-bold text-xl">
+                    <i class="fa-solid fa-file-lines"></i>
+                </div>
+                <div>
+                    <h1 class="font-bold text-lg tracking-tight">Generador de Actas Profesional</h1>
+                    <p class="text-xs text-slate-400">Estándar Marley Coffee & SM Consultores</p>
+                </div>
+            </div>
+            <div class="flex items-center space-x-3">
+                <button onclick="resetDefaults()" class="px-3 py-2 text-xs font-medium rounded-lg bg-slate-800 hover:bg-slate-700 text-slate-300 transition flex items-center gap-1.5 border border-slate-700">
+                    <i class="fa-solid fa-rotate-right"></i> Limpiar
+                </button>
+                <button onclick="exportToImage(this)" class="px-4 py-2 text-xs font-semibold rounded-lg bg-emerald-600 hover:bg-emerald-500 text-white shadow transition flex items-center gap-2">
+                    <i class="fa-solid fa-image"></i> Exportar JPEG
+                </button>
+                <button onclick="exportToPDF(this)" class="px-4 py-2 text-xs font-semibold rounded-lg bg-rose-600 hover:bg-rose-500 text-white shadow transition flex items-center gap-2">
+                    <i class="fa-solid fa-file-pdf"></i> Exportar PDF
+                </button>
+            </div>
         </div>
+    </header>
 
-        <div class="flex-1 overflow-y-auto p-6 space-y-6">
-            <!-- Sección: Datos Generales -->
-            <div>
-                <h3 class="text-md font-semibold text-gray-700 mb-3 border-b pb-2"><i class="fas fa-info-circle mr-2"></i>Datos Generales</h3>
-                <div class="space-y-3">
-                    <div>
-                        <label class="block text-sm font-medium text-gray-600">Título del Acta</label>
-                        <input type="text" id="in-titulo" class="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-blue-500 focus:ring-blue-500 border p-2" value="ACTA DE REUNIÓN">
-                    </div>
-                    <div>
-                        <label class="block text-sm font-medium text-gray-600">Fecha</label>
-                        <input type="date" id="in-fecha" class="mt-1 block w-full rounded-md border-gray-300 shadow-sm border p-2">
-                    </div>
-                    <div>
-                        <label class="block text-sm font-medium text-gray-600">Lugar/Plataforma</label>
-                        <input type="text" id="in-lugar" class="mt-1 block w-full rounded-md border-gray-300 shadow-sm border p-2" placeholder="Ej. Sala de Juntas / Zoom">
-                    </div>
-                    <div>
-                        <label class="block text-sm font-medium text-gray-600">Participantes</label>
-                        <textarea id="in-participantes" rows="2" class="mt-1 block w-full rounded-md border-gray-300 shadow-sm border p-2" placeholder="Nombres de los asistentes..."></textarea>
-                    </div>
-                </div>
+    <main class="flex-1 max-w-7xl w-full mx-auto p-4 md:p-6 grid grid-cols-1 lg:grid-cols-12 gap-6 items-start">
+
+        <!-- PANEL DE EDICIÓN -->
+        <section class="lg:col-span-5 bg-white rounded-2xl shadow-xl border border-slate-200 p-6 no-print flex flex-col gap-6 sticky top-20 max-h-[calc(100vh-6rem)] overflow-y-auto">
+            <div class="flex items-center justify-between border-b pb-4">
+                <h2 class="font-bold text-slate-900 text-base flex items-center gap-2">
+                    <i class="fa-solid fa-pen-to-square text-amber-600"></i> Edición de Datos
+                </h2>
+                <span class="text-xs bg-amber-50 text-amber-700 font-medium px-2.5 py-1 rounded-full border border-amber-200">Tiempo real</span>
             </div>
 
-            <!-- Sección: Contenido -->
-            <div>
-                <h3 class="text-md font-semibold text-gray-700 mb-3 border-b pb-2"><i class="fas fa-list-alt mr-2"></i>Desarrollo y Acuerdos</h3>
-                <div class="space-y-3">
-                    <div>
-                        <label class="block text-sm font-medium text-gray-600">Temas Tratados</label>
-                        <textarea id="in-temas" rows="4" class="mt-1 block w-full rounded-md border-gray-300 shadow-sm border p-2" placeholder="Describe los puntos discutidos..."></textarea>
-                    </div>
-                    <div>
-                        <label class="block text-sm font-medium text-gray-600">Acuerdos y Compromisos</label>
-                        <textarea id="in-acuerdos" rows="3" class="mt-1 block w-full rounded-md border-gray-300 shadow-sm border p-2" placeholder="Decisiones tomadas y responsables..."></textarea>
-                    </div>
-                </div>
-            </div>
-
-            <!-- Sección: Firmas -->
-            <div>
-                <h3 class="text-md font-semibold text-gray-700 mb-3 border-b pb-2"><i class="fas fa-pen-nib mr-2"></i>Firmantes</h3>
+            <div class="space-y-4">
+                <h3 class="text-xs font-bold uppercase tracking-wider text-slate-400">1. Cabecera y Metadatos</h3>
                 <div class="grid grid-cols-2 gap-3">
                     <div>
-                        <label class="block text-sm font-medium text-gray-600">Firma 1 (Nombre)</label>
-                        <input type="text" id="in-firma1" class="mt-1 block w-full rounded-md border-gray-300 shadow-sm border p-2" placeholder="Ej. Juan Pérez">
+                        <label class="block text-xs font-medium text-slate-600 mb-1">Fecha</label>
+                        <input type="text" id="input-fecha" oninput="updatePreview()" value="05/10/2026" class="w-full px-3 py-2 text-sm rounded-lg border border-slate-300 focus:ring-2 focus:ring-amber-500 focus:outline-none">
                     </div>
                     <div>
-                        <label class="block text-sm font-medium text-gray-600">Firma 2 (Nombre)</label>
-                        <input type="text" id="in-firma2" class="mt-1 block w-full rounded-md border-gray-300 shadow-sm border p-2" placeholder="Ej. María Gómez">
+                        <label class="block text-xs font-medium text-slate-600 mb-1">Título Acta</label>
+                        <input type="text" id="input-titulo" oninput="updatePreview()" value="Acta de Reunión" class="w-full px-3 py-2 text-sm rounded-lg border border-slate-300 focus:ring-2 focus:ring-amber-500 focus:outline-none">
+                    </div>
+                </div>
+                <div class="grid grid-cols-1 gap-3">
+                    <div>
+                        <label class="block text-xs font-medium text-slate-600 mb-1">Consultoría</label>
+                        <input type="text" id="input-consultoria" oninput="updatePreview()" value="SM Consultores" class="w-full px-3 py-2 text-sm rounded-lg border border-slate-300 focus:ring-2 focus:ring-amber-500 focus:outline-none">
+                    </div>
+                    <div>
+                        <label class="block text-xs font-medium text-slate-600 mb-1">Proceso</label>
+                        <input type="text" id="input-proceso" oninput="updatePreview()" value="Operaciones" class="w-full px-3 py-2 text-sm rounded-lg border border-slate-300 focus:ring-2 focus:ring-amber-500 focus:outline-none">
+                    </div>
+                    <div>
+                        <label class="block text-xs font-medium text-slate-600 mb-1">Elaborado por</label>
+                        <input type="text" id="input-elabora" oninput="updatePreview()" value="Lic. Shalon Morales" class="w-full px-3 py-2 text-sm rounded-lg border border-slate-300 focus:ring-2 focus:ring-amber-500 focus:outline-none">
+                    </div>
+                    <div>
+                        <label class="block text-xs font-medium text-slate-600 mb-1">Logo Empresa (PNG Transparente)</label>
+                        <input type="file" id="input-logo" accept="image/*" onchange="cambiarImagen(this, 'prev-logo')" class="w-full text-xs text-slate-500 file:mr-3 file:py-1.5 file:px-3 file:rounded-lg file:border-0 file:text-xs file:font-semibold file:bg-amber-50 file:text-amber-700 hover:file:bg-amber-100">
                     </div>
                 </div>
             </div>
-        </div>
 
-        <!-- Botones de Acción -->
-        <div class="p-4 bg-gray-50 border-t border-gray-200 space-y-2">
-            <button onclick="window.print()" class="w-full bg-gray-600 hover:bg-gray-700 text-white font-semibold py-2 px-4 rounded shadow">
-                <i class="fas fa-print mr-2"></i>Imprimir
-            </button>
-            <button onclick="exportarPDF()" class="w-full bg-red-600 hover:bg-red-700 text-white font-semibold py-2 px-4 rounded shadow">
-                <i class="fas fa-file-pdf mr-2"></i>Descargar PDF
-            </button>
-            <button onclick="exportarWord()" class="w-full bg-blue-600 hover:bg-blue-700 text-white font-semibold py-2 px-4 rounded shadow">
-                <i class="fas fa-file-word mr-2"></i>Descargar Word
-            </button>
-        </div>
-    </div>
+            <div class="space-y-6 pt-4 border-t border-slate-100">
+                <h3 class="text-xs font-bold uppercase tracking-wider text-slate-400">2. Secciones Principales</h3>
+                
+                <div class="space-y-2">
+                    <div class="flex justify-between items-center">
+                        <label class="text-xs font-bold text-slate-700">Temas Tratados</label>
+                        <button onclick="addItem('temas')" class="text-xs text-amber-600 hover:text-amber-700 font-semibold flex items-center gap-1"><i class="fa-solid fa-plus"></i> Agregar ítem</button>
+                    </div>
+                    <div id="editor-temas" class="space-y-2"></div>
+                </div>
 
-    <!-- PANEL DERECHO (Vista Previa A4) -->
-    <div class="w-2/3 bg-gray-200 overflow-y-auto p-8 flex justify-center">
-        
-        <div id="document-preview" class="a4-container">
-            <!-- GARABATOS PRECARGADOS (Buscarán los archivos en la misma carpeta) -->
-            <img src="img/garabato_1.png" alt="" class="garabato garabato-1" onerror="this.style.display='none'">
-            <img src="img/garabato_2.png" alt="" class="garabato garabato-2" onerror="this.style.display='none'">
-            <img src="img/garabato_3.png" alt="" class="garabato garabato-3" onerror="this.style.display='none'">
-            <img src="img/garabato_4.png" alt="" class="garabato garabato-4" onerror="this.style.display='none'">
+                <div class="space-y-2 pt-2 border-t border-slate-100">
+                    <div class="flex justify-between items-center">
+                        <label class="text-xs font-bold text-slate-700">Pendientes a realizar</label>
+                        <button onclick="addItem('pendientes')" class="text-xs text-amber-600 hover:text-amber-700 font-semibold flex items-center gap-1"><i class="fa-solid fa-plus"></i> Agregar ítem</button>
+                    </div>
+                    <div id="editor-pendientes" class="space-y-2"></div>
+                </div>
 
-            <!-- Cabecera -->
-            <div class="document-title" id="out-titulo">ACTA DE REUNIÓN</div>
+                <div class="space-y-2 pt-2 border-t border-slate-100">
+                    <div class="flex justify-between items-center">
+                        <label class="text-xs font-bold text-slate-700">Acciones próximo encuentro</label>
+                        <button onclick="addItem('acciones')" class="text-xs text-amber-600 hover:text-amber-700 font-semibold flex items-center gap-1"><i class="fa-solid fa-plus"></i> Agregar ítem</button>
+                    </div>
+                    <div id="editor-acciones" class="space-y-2"></div>
+                </div>
+            </div>
+
+            <div class="space-y-4 pt-4 border-t border-slate-100">
+                <h3 class="text-xs font-bold uppercase tracking-wider text-slate-400">3. Adornos (PNG - Garabatos)</h3>
+                <p class="text-xs text-slate-500 mb-2">Subí los archivos de trazos para sustituir el SVG predeterminado.</p>
+                <div class="grid grid-cols-1 gap-3">
+                    <div>
+                        <label class="block text-xs font-medium text-slate-600 mb-1">Garabato Título</label>
+                        <input type="file" accept="image/png" onchange="cargarAdorno(this, 'img-deco-titulo')" class="w-full text-xs text-slate-500 file:mr-3 file:py-1 file:px-2 file:rounded file:border-0 file:bg-slate-100 hover:file:bg-slate-200">
+                    </div>
+                    <div>
+                        <label class="block text-xs font-medium text-slate-600 mb-1">Garabato Temas Tratados</label>
+                        <input type="file" accept="image/png" onchange="cargarAdorno(this, 'img-deco-temas')" class="w-full text-xs text-slate-500 file:mr-3 file:py-1 file:px-2 file:rounded file:border-0 file:bg-slate-100 hover:file:bg-slate-200">
+                    </div>
+                    <div>
+                        <label class="block text-xs font-medium text-slate-600 mb-1">Garabato Pendientes</label>
+                        <input type="file" accept="image/png" onchange="cargarAdorno(this, 'img-deco-pendientes')" class="w-full text-xs text-slate-500 file:mr-3 file:py-1 file:px-2 file:rounded file:border-0 file:bg-slate-100 hover:file:bg-slate-200">
+                    </div>
+                    <div>
+                        <label class="block text-xs font-medium text-slate-600 mb-1">Garabato Acciones</label>
+                        <input type="file" accept="image/png" onchange="cargarAdorno(this, 'img-deco-acciones')" class="w-full text-xs text-slate-500 file:mr-3 file:py-1 file:px-2 file:rounded file:border-0 file:bg-slate-100 hover:file:bg-slate-200">
+                    </div>
+                </div>
+            </div>
+        </section>
+
+        <!-- VISTA PREVIA A4 -->
+        <section class="lg:col-span-7 flex flex-col items-center min-w-0">
+            <div class="w-full flex justify-between items-center mb-3 no-print px-2">
+                <span class="text-xs font-semibold text-slate-500 uppercase tracking-wider">Vista Previa Documento (A4)</span>
+            </div>
+
+            <div id="caja-preview">
+                <div id="escala" style="width: 1545px; height: 2183px;">
+                    <div id="acta-preview" class="acta">
+
+                        <!-- Adornos SVG predeterminados (se ocultan si suben PNG) -->
+                        <svg id="svg-default" class="acta-deco" width="1545" fill="none" xmlns="http://www.w3.org/2000/svg">
+                            <g stroke="#FFD782" stroke-linecap="round" stroke-linejoin="round">
+                                <g id="deco-titulo" stroke-width="8">
+                                    <path d="M922 283C952 240 1000 190 1040 148"/>
+                                    <path d="M962 264C972 238 988 216 1002 211C1010 226 1001 250 1006 264"/>
+                                    <path d="M1014 264C1030 238 1046 226 1054 222C1052 238 1050 254 1064 264"/>
+                                    <path d="M1072 264C1078 246 1088 232 1094 228"/>
+                                </g>
+                                <g id="deco-1" stroke-width="9">
+                                    <path d="M122 566C128 534 300 514 392 532C430 546 420 590 382 608C300 634 160 630 124 598C108 580 120 556 152 544"/>
+                                    <path d="M112 586C128 542 330 512 412 542"/>
+                                </g>
+                                <g id="deco-2" stroke-width="12">
+                                    <path d="M342 1097L462 1048L388 1198L488 1183"/>
+                                    <path d="M440 1166L488 1183L478 1218"/>
+                                </g>
+                                <g id="deco-3" stroke-width="14">
+                                    <path d="M220 1543L412 1540"/>
+                                    <path d="M404 1550L264 1576L372 1578"/>
+                                </g>
+                            </g>
+                        </svg>
+
+                        <!-- PNGs Inyectables -->
+                        <img id="img-deco-titulo" class="acta-deco-img" alt="">
+                        <img id="img-deco-temas" class="acta-deco-img" alt="">
+                        <img id="img-deco-pendientes" class="acta-deco-img" alt="">
+                        <img id="img-deco-acciones" class="acta-deco-img" alt="">
+
+                        <img id="prev-logo" class="acta-logo" alt="Logo" style="display:none;">
+
+                        <div class="acta-cab">
+                            <h1 class="acta-titulo" id="out-titulo">Acta de Reunión</h1>
+                            <div class="acta-meta">
+                                <p><strong>Fecha:</strong> <span id="out-fecha">05/10/2026</span></p>
+                                <p><strong>Consultoría:</strong> <span id="out-consultoria">SM Consultores</span></p>
+                                <p><strong>Proceso:</strong> <span id="out-proceso">Operaciones</span></p>
+                            </div>
+                        </div>
+
+                        <div class="sec sec-1">
+                            <div class="sec-et">Temas Tratados</div>
+                            <ul id="out-temas"></ul>
+                        </div>
+                        <div class="sec sec-2">
+                            <div class="sec-et">Pendientes a realizar</div>
+                            <ul id="out-pendientes"></ul>
+                        </div>
+                        <div class="sec sec-3">
+                            <div class="sec-et">Acciones acordadas<br>próximo encuentro</div>
+                            <ul id="out-acciones"></ul>
+                        </div>
+
+                        <div class="acta-pie">
+                            Elaborado por: <span id="out-elabora">Lic. Shalon Morales</span>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </section>
+    </main>
+
+    <script>
+        // Escalar la vista previa A4 dinámicamente según la pantalla
+        function ajustarEscala() {
+            const container = document.getElementById('caja-preview');
+            const escalaEl = document.getElementById('escala');
+            const containerWidth = container.clientWidth;
+            const targetWidth = 1545;
             
-            <!-- Información General -->
-            <div class="info-grid">
-                <div class="info-item">
-                    <strong>Fecha:</strong> <span id="out-fecha">--/--/----</span>
-                </div>
-                <div class="info-item">
-                    <strong>Lugar/Medio:</strong> <span id="out-lugar">_________________</span>
-                </div>
-                <div class="info-item" style="grid-column: span 2;">
-                    <strong>Participantes:</strong> <span id="out-participantes">_________________</span>
-                </div>
-            </div>
+            if (containerWidth < targetWidth) {
+                const ratio = containerWidth / targetWidth;
+                escalaEl.style.transform = `scale(${ratio})`;
+                escalaEl.style.height = `${2183 * ratio}px`;
+            } else {
+                escalaEl.style.transform = 'scale(1)';
+                escalaEl.style.height = '2183px';
+            }
+        }
 
-            <!-- Desarrollo -->
-            <div class="section-title">1. Temas Tratados y Desarrollo</div>
-            <div class="content-text" id="out-temas">Aquí se reflejará el desarrollo de la reunión...</div>
+        window.addEventListener('resize', ajustarEscala);
+        window.addEventListener('DOMContentLoaded', () => {
+            ajustarEscala();
+            // Inicializar un ítem de ejemplo por sección
+            addItem('temas', 'Revisión de flujos de trabajo actuales.');
+            addItem('pendientes', 'Actualizar documentación base.');
+            addItem('acciones', 'Agendar próxima reunión para el viernes.');
+            updatePreview();
+        });
 
-            <!-- Acuerdos -->
-            <div class="section-title">2. Acuerdos y Compromisos</div>
-            <div class="content-text" id="out-acuerdos">Aquí se reflejarán los acuerdos...</div>
+        // Actualizar textos
+        function updatePreview() {
+            document.getElementById('out-fecha').innerText = document.getElementById('input-fecha').value;
+            document.getElementById('out-titulo').innerText = document.getElementById('input-titulo').value;
+            document.getElementById('out-consultoria').innerText = document.getElementById('input-consultoria').value;
+            document.getElementById('out-proceso').innerText = document.getElementById('input-proceso').value;
+            document.getElementById('out-elabora').innerText = document.getElementById('input-elabora').value;
+        }
 
-            <!-- Firmas -->
-            <div class="signatures-area">
-                <div class="signature-line" id="out-firma1">Firma 1</div>
-                <div class="signature-line" id="out-firma2">Firma 2</div>
-            </div>
-        </div>
-    </div>
+        // Leer imágenes (logo y adornos)
+        function cambiarImagen(input, targetId) {
+            if (input.files && input.files[0]) {
+                const reader = new FileReader();
+                reader.onload = function (e) {
+                    const img = document.getElementById(targetId);
+                    img.src = e.target.result;
+                    img.style.display = 'block';
+                };
+                reader.readAsDataURL(input.files[0]);
+            }
+        }
 
-    <!-- Archivo de JavaScript -->
-    <script src="js/script.js"></script>
+        function cargarAdorno(input, targetId) {
+            cambiarImagen(input, targetId);
+            // Si cargan al menos un garabato, ocultar el SVG de fondo predeterminado
+            document.getElementById('svg-default').style.display = 'none';
+        }
+
+        // Gestión de items (listas)
+        function addItem(section, defaultValue = '') {
+            const editor = document.getElementById(`editor-${section}`);
+            const div = document.createElement('div');
+            div.className = 'flex gap-2 mb-2';
+            div.innerHTML = `
+                <input type="text" value="${defaultValue}" class="w-full px-3 py-2 text-sm rounded border border-slate-300 item-input-${section}" oninput="renderLists()">
+                <button onclick="this.parentElement.remove(); renderLists()" class="px-3 py-2 text-rose-500 hover:bg-rose-50 border border-rose-200 rounded transition"><i class="fa-solid fa-trash"></i></button>
+            `;
+            editor.appendChild(div);
+            renderLists();
+        }
+
+        function renderLists() {
+            ['temas', 'pendientes', 'acciones'].forEach(section => {
+                const inputs = document.querySelectorAll(`.item-input-${section}`);
+                const ul = document.getElementById(`out-${section}`);
+                ul.innerHTML = '';
+                inputs.forEach(input => {
+                    if (input.value.trim() !== '') {
+                        const li = document.createElement('li');
+                        li.innerText = input.value.trim();
+                        ul.appendChild(li);
+                    }
+                });
+            });
+        }
+
+        function resetDefaults() {
+            document.getElementById('editor-temas').innerHTML = '';
+            document.getElementById('editor-pendientes').innerHTML = '';
+            document.getElementById('editor-acciones').innerHTML = '';
+            ['img-deco-titulo', 'img-deco-temas', 'img-deco-pendientes', 'img-deco-acciones', 'prev-logo'].forEach(id => {
+                document.getElementById(id).style.display = 'none';
+                document.getElementById(id).src = '';
+            });
+            document.getElementById('svg-default').style.display = 'block';
+            updatePreview();
+        }
+
+        // Exportar a JPEG (como lo solicitaste en lugar del PDF directo, o además del PDF)
+        function exportToImage(btn) {
+            const originalText = btn.innerHTML;
+            btn.innerHTML = '<i class="fa-solid fa-spinner fa-spin"></i> Procesando...';
+            
+            // Forzar escala a 1 momentáneamente para alta calidad
+            const escalaEl = document.getElementById('escala');
+            const transformOrg = escalaEl.style.transform;
+            escalaEl.style.transform = 'scale(1)';
+
+            setTimeout(() => {
+                const element = document.getElementById('acta-preview');
+                html2canvas(element, { scale: 1.5, useCORS: true }).then(canvas => {
+                    const link = document.createElement('a');
+                    link.download = 'Acta_SM_Consultores.jpg';
+                    link.href = canvas.toDataURL('image/jpeg', 0.95);
+                    link.click();
+                    
+                    escalaEl.style.transform = transformOrg;
+                    btn.innerHTML = originalText;
+                });
+            }, 300);
+        }
+
+        // Exportar a PDF 
+        function exportToPDF(btn) {
+            const originalText = btn.innerHTML;
+            btn.innerHTML = '<i class="fa-solid fa-spinner fa-spin"></i> Generando PDF...';
+            
+            const escalaEl = document.getElementById('escala');
+            const transformOrg = escalaEl.style.transform;
+            escalaEl.style.transform = 'scale(1)';
+
+            setTimeout(() => {
+                const element = document.getElementById('acta-preview');
+                html2canvas(element, { scale: 1.5, useCORS: true }).then(canvas => {
+                    const imgData = canvas.toDataURL('image/jpeg', 0.95);
+                    const pdf = new jspdf.jsPDF('p', 'mm', 'a4');
+                    const pdfWidth = pdf.internal.pageSize.getWidth();
+                    const pdfHeight = (canvas.height * pdfWidth) / canvas.width;
+                    
+                    pdf.addImage(imgData, 'JPEG', 0, 0, pdfWidth, pdfHeight);
+                    pdf.save('Acta_SM_Consultores.pdf');
+                    
+                    escalaEl.style.transform = transformOrg;
+                    btn.innerHTML = originalText;
+                });
+            }, 300);
+        }
+    </script>
 </body>
 </html>
