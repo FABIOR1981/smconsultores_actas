@@ -1,0 +1,54 @@
+/* Estilos del Generador de Actas — medidas en px sobre una hoja de 1545 px de ancho (= A4) */
+@font-face{font-family:'Montserrat';font-weight:400;font-style:normal;src:url(../fonts/montserrat-latin-400-normal.woff2) format('woff2');}
+@font-face{font-family:'Montserrat';font-weight:500;font-style:normal;src:url(../fonts/montserrat-latin-500-normal.woff2) format('woff2');}
+@font-face{font-family:'Montserrat';font-weight:800;font-style:normal;src:url(../fonts/montserrat-latin-800-normal.woff2) format('woff2');}
+@font-face{font-family:'Open Sans';font-weight:400;font-style:normal;src:url(../fonts/open-sans-latin-400-normal.woff2) format('woff2');}
+
+body { font-family: 'Inter', sans-serif; background-color: #f3f4f6; }
+
+        /* ===== HOJA A4 — todas las medidas están en "píxeles de la imagen de referencia" (1545 px de ancho = 210 mm) ===== */
+        .acta {
+                        position: relative;
+            width: 1545px;
+            min-height: 2183px;
+            background: #fff;
+            box-sizing: border-box;
+            display: flex;
+            flex-direction: column;
+            overflow: hidden;
+            font-family: 'Montserrat', sans-serif;
+            color: #000;
+        }
+        .acta, .acta * { box-sizing: border-box; margin: 0; padding: 0; }
+        .acta-deco { position: absolute; left: 0; top: 0; width: 1545px; height: 100%; z-index: 0; overflow: hidden; pointer-events: none; }
+        .acta-deco-img { position: absolute; z-index: 0; display: none; height: auto; max-width: none; pointer-events: none; }
+        .acta-logo { display: block; position: absolute; left: 54px; top: 40px; width: 240px; height: auto; }
+
+        .acta-cab { position: relative; margin-left: 528px; margin-top: 182px; }
+        .acta-titulo { position: relative; z-index: 1; margin: 0; font-weight: 800; font-size: 75px; line-height: 75px; color: #000; }
+        .acta-meta { position: relative; z-index: 1; margin-top: 30.5px; font-weight: 500; font-size: 36.6px; line-height: 49px; color: #111; }
+        .acta-meta p { margin: 0; }
+
+        .sec { position: relative; display: flex; align-items: flex-start; padding-left: 155px; }
+        .sec-1 { margin-top: 92.5px; }
+        .sec-2 { margin-top: 59px; }
+        .sec-3 { margin-top: 124px; }
+        .sec-et { position: relative; z-index: 1; flex: none; width: 400px; font-weight: 800; font-size: 34.4px; line-height: 45.5px; color: #000; }
+        .sec-2 .sec-et { margin-top: 16px; }
+        .sec-3 .sec-et { margin-top: -31px; }
+        .sec ul { position: relative; z-index: 1; flex: none; width: 820px; margin: 0; padding: 0; list-style: none; }
+        .sec li { position: relative; padding-left: 30px; margin: 0; font-weight: 400; font-size: 34.1px; line-height: 45.5px; text-align: justify; color: #1a1a1a; }
+        .sec li::before { content: ''; position: absolute; left: 0; top: 15.5px; width: 14px; height: 14px; border-radius: 50%; background: #111; }
+
+        .acta-pie { margin-top: auto; align-self: flex-end; margin-right: 42px; margin-bottom: 33px; padding-top: 70px; font-family: 'Open Sans', sans-serif; font-weight: 400; font-size: 30.3px; color: #8c8c8c; }
+
+        #caja-preview { width: 100%; overflow: hidden; }
+        #escala { width: 1545px; box-shadow: 0 10px 25px -5px rgba(0,0,0,.15), 0 8px 10px -6px rgba(0,0,0,.1); transform-origin: top left; }
+
+        @media print {
+            body { background: none; }
+            .no-print { display: none !important; }
+        }
+        ::-webkit-scrollbar { width: 8px; height: 8px; }
+        ::-webkit-scrollbar-track { background: #e5e7eb; }
+        ::-webkit-scrollbar-thumb { background: #9ca3af; border-radius: 4px; }
