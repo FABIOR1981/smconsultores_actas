@@ -4,10 +4,13 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Generador de Actas de Reunión</title>
+    
     <!-- Tailwind CSS para los estilos del panel -->
     <script src="https://cdn.tailwindcss.com"></script>
+    
     <!-- Fuentes de Google -->
     <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600&family=Montserrat:ital,wght@0,300;0,400;0,600;1,400&display=swap" rel="stylesheet">
+    
     <!-- FontAwesome para iconos -->
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
     
@@ -17,106 +20,8 @@
     <script src="https://unpkg.com/docx@7.3.0/build/index.js"></script>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/FileSaver.js/2.0.5/FileSaver.min.js"></script>
 
-    <style>
-        body {
-            font-family: 'Inter', sans-serif;
-            background-color: #f3f4f6;
-        }
-        
-        /* Estilos específicos para la hoja A4 */
-        .a4-container {
-            width: 210mm;
-            min-height: 297mm;
-            background: white;
-            box-shadow: 0 10px 15px -3px rgba(0, 0, 0, 0.1);
-            margin: 0 auto;
-            padding: 20mm;
-            font-family: 'Montserrat', sans-serif;
-            position: relative;
-            color: #333;
-        }
-
-        .document-title {
-            font-size: 24pt;
-            font-weight: 600;
-            color: #1a365d;
-            text-align: center;
-            margin-bottom: 5mm;
-            border-bottom: 2px solid #1a365d;
-            padding-bottom: 3mm;
-            position: relative;
-        }
-
-        /* Estilo para los garabatos decorativos */
-        .garabato {
-            position: absolute;
-            opacity: 0.8;
-            pointer-events: none; /* Para que no interfieran con el texto */
-        }
-        .garabato-1 { top: 10mm; right: 10mm; width: 60px; }
-        .garabato-2 { top: 60mm; left: 10mm; width: 50px; }
-        .garabato-3 { top: 140mm; right: 15mm; width: 70px; }
-        .garabato-4 { bottom: 30mm; left: 20mm; width: 65px; }
-
-        .section-title {
-            font-size: 14pt;
-            font-weight: 600;
-            color: #2b6cb0;
-            margin-top: 8mm;
-            margin-bottom: 4mm;
-            border-left: 4px solid #2b6cb0;
-            padding-left: 3mm;
-        }
-
-        .content-text {
-            font-size: 11pt;
-            line-height: 1.6;
-            margin-bottom: 3mm;
-            white-space: pre-wrap;
-        }
-
-        .info-grid {
-            display: grid;
-            grid-template-columns: 1fr 1fr;
-            gap: 4mm;
-            margin-bottom: 6mm;
-            background-color: #f8fafc;
-            padding: 5mm;
-            border-radius: 4px;
-        }
-
-        .info-item strong {
-            color: #4a5568;
-            font-weight: 600;
-        }
-
-        .signatures-area {
-            margin-top: 20mm;
-            display: grid;
-            grid-template-columns: 1fr 1fr;
-            gap: 10mm;
-            text-align: center;
-        }
-
-        .signature-line {
-            border-top: 1px solid #000;
-            margin-top: 15mm;
-            padding-top: 2mm;
-            font-size: 10pt;
-        }
-
-        @media print {
-            body * { visibility: hidden; }
-            #document-preview, #document-preview * { visibility: visible; }
-            #document-preview {
-                position: absolute;
-                left: 0;
-                top: 0;
-                box-shadow: none;
-                padding: 0;
-            }
-        }
-    </style>
+    <!-- Archivo de estilos separado -->
+    <link rel="stylesheet" href="css/style.css">
 </head>
 <body class="h-screen flex overflow-hidden">
 
@@ -200,7 +105,7 @@
     <div class="w-2/3 bg-gray-200 overflow-y-auto p-8 flex justify-center">
         
         <div id="document-preview" class="a4-container">
-            <!-- GARABATOS PRECARGADOS (Buscarán los archivos en la misma carpeta) -->
+            <!-- GARABATOS PRECARGADOS DESDE CARPETA img/ -->
             <img src="img/garabato_1.png" alt="" class="garabato garabato-1" onerror="this.style.display='none'">
             <img src="img/garabato_2.png" alt="" class="garabato garabato-2" onerror="this.style.display='none'">
             <img src="img/garabato_3.png" alt="" class="garabato garabato-3" onerror="this.style.display='none'">
@@ -238,98 +143,7 @@
         </div>
     </div>
 
-    <!-- Scripts para sincronización y exportación -->
-    <script>
-        // Sincronización en tiempo real
-        const campos = ['titulo', 'fecha', 'lugar', 'participantes', 'temas', 'acuerdos', 'firma1', 'firma2'];
-        
-        campos.forEach(campo => {
-            const input = document.getElementById(`in-${campo}`);
-            const output = document.getElementById(`out-${campo}`);
-            
-            input.addEventListener('input', (e) => {
-                let valor = e.target.value;
-                if(campo === 'fecha' && valor) {
-                    // Formatear fecha a DD/MM/YYYY
-                    const [y, m, d] = valor.split('-');
-                    valor = `${d}/${m}/${y}`;
-                }
-                output.innerText = valor || (campo.includes('firma') ? `Firma ${campo.slice(-1)}` : '_________________');
-            });
-        });
-
-        // Poner fecha de hoy por defecto
-        document.getElementById('in-fecha').valueAsDate = new Date();
-        document.getElementById('in-fecha').dispatchEvent(new Event('input'));
-
-        // Exportar a PDF usando html2canvas y jsPDF
-        window.exportarPDF = function() {
-            const doc = document.getElementById('document-preview');
-            html2canvas(doc, { scale: 2 }).then(canvas => {
-                const imgData = canvas.toDataURL('image/jpeg', 1.0);
-                const pdf = new jspdf.jsPDF({
-                    orientation: 'portrait',
-                    unit: 'mm',
-                    format: 'a4'
-                });
-                
-                const pdfWidth = pdf.internal.pageSize.getWidth();
-                const pdfHeight = (canvas.height * pdfWidth) / canvas.width;
-                
-                pdf.addImage(imgData, 'JPEG', 0, 0, pdfWidth, pdfHeight);
-                pdf.save('Acta_Reunion.pdf');
-            });
-        }
-
-        // Exportar a Word (Texto plano estructurado) usando docx
-        window.exportarWord = function() {
-            const titulo = document.getElementById('out-titulo').innerText;
-            const fecha = document.getElementById('out-fecha').innerText;
-            const lugar = document.getElementById('out-lugar').innerText;
-            const participantes = document.getElementById('out-participantes').innerText;
-            const temas = document.getElementById('out-temas').innerText;
-            const acuerdos = document.getElementById('out-acuerdos').innerText;
-            const firma1 = document.getElementById('out-firma1').innerText;
-            const firma2 = document.getElementById('out-firma2').innerText;
-
-            const doc = new docx.Document({
-                sections: [{
-                    properties: {},
-                    children: [
-                        new docx.Paragraph({
-                            text: titulo,
-                            heading: docx.HeadingLevel.HEADING_1,
-                            alignment: docx.AlignmentType.CENTER,
-                        }),
-                        new docx.Paragraph({ text: "" }),
-                        new docx.Paragraph({ text: `Fecha: ${fecha}`, bold: true }),
-                        new docx.Paragraph({ text: `Lugar: ${lugar}`, bold: true }),
-                        new docx.Paragraph({ text: `Participantes: ${participantes}`, bold: true }),
-                        new docx.Paragraph({ text: "" }),
-                        new docx.Paragraph({
-                            text: "1. Temas Tratados y Desarrollo",
-                            heading: docx.HeadingLevel.HEADING_2,
-                        }),
-                        new docx.Paragraph({ text: temas }),
-                        new docx.Paragraph({ text: "" }),
-                        new docx.Paragraph({
-                            text: "2. Acuerdos y Compromisos",
-                            heading: docx.HeadingLevel.HEADING_2,
-                        }),
-                        new docx.Paragraph({ text: acuerdos }),
-                        new docx.Paragraph({ text: "" }),
-                        new docx.Paragraph({ text: "" }),
-                        new docx.Paragraph({ text: "Firmas:", bold: true }),
-                        new docx.Paragraph({ text: `_______________________          _______________________` }),
-                        new docx.Paragraph({ text: `${firma1}                                 ${firma2}` })
-                    ],
-                }]
-            });
-
-            docx.Packer.toBlob(doc).then(blob => {
-                saveAs(blob, "Acta_Reunion.docx");
-            });
-        }
-    </script>
+    <!-- Archivo de JavaScript separado -->
+    <script src="js/script.js"></script>
 </body>
 </html>
