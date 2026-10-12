@@ -207,10 +207,14 @@ const EJEMPLO = {
             const original = btn.innerHTML;
             btn.innerHTML = `<i class="fa-solid fa-spinner fa-spin"></i> Generando PDF...`;
             btn.disabled = true;
-            let host;
+            let host, parche;
             try {
                 await document.fonts.ready;
                 posicionarDecoraciones();
+                // Evita que los estilos globales (Tailwind) desplacen el texto al dibujar el PDF
+                parche = document.createElement('style');
+                parche.textContent = 'img, svg { display: inline !important; vertical-align: baseline !important; }';
+                document.head.appendChild(parche);
                 // Copia de la hoja a tamaño real (1545 px), fuera de pantalla y sin escala
                 host = document.createElement('div');
                 host.style.cssText = 'position:fixed;left:-20000px;top:0;width:1545px;background:#fff;';
@@ -218,7 +222,11 @@ const EJEMPLO = {
                 copia.removeAttribute('id');
                 host.appendChild(copia);
                 document.body.appendChild(host);
-                const canvas = await html2canvas(copia, { scale: 2, backgroundColor: '#ffffff', useCORS: true, width: 1545, windowWidth: 1545, scrollX: 0, scrollY: 0 });
+                const canvas = await html2canvas(copia, {
+                    scale: 2, backgroundColor: '#ffffff', useCORS: true, width: 1545, windowWidth: 1545, scrollX: 0, scrollY: 0,
+                    // Mismo parche en el documento clonado
+                    onclone: doc => { const e = doc.createElement('style'); e.textContent = 'img, svg { display: inline !important; vertical-align: baseline !important; }'; doc.head.appendChild(e); }
+                });
                 const { jsPDF } = window.jspdf;
                 const pdf = new jsPDF({ unit: 'mm', format: 'a4', orientation: 'portrait' });
                 const altoPagina = Math.round(canvas.width * 297 / 210);
@@ -238,6 +246,7 @@ const EJEMPLO = {
                 alert('Error al generar el PDF.');
             } finally {
                 if (host && host.parentNode) host.parentNode.removeChild(host);
+                if (parche && parche.parentNode) parche.parentNode.removeChild(parche);
                 btn.innerHTML = original; btn.disabled = false;
             }
         }
