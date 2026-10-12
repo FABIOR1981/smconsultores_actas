@@ -3,199 +3,98 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Acta de Reunión</title>
-    <style>
-        /* Estilos generales limpios para el acta */
-        body {
-            font-family: Arial, sans-serif;
-            color: #111;
-            background-color: #fff;
-            margin: 0;
-            padding: 40px;
-        }
-
-        .container {
-            max-width: 800px;
-            margin: 0 auto;
-        }
-
-        .header {
-            margin-bottom: 30px;
-        }
-
-        /* Contenedores relativos para posicionar los garabatos de forma absoluta respecto al texto */
-        .titulo-container,
-        .columna-izquierda h3 {
-            position: relative;
-            display: inline-block;
-            z-index: 1;
-        }
-
-        h1 {
-            font-size: 36px;
-            margin: 0;
-        }
-
-        /* 1. garabato_1.png -> Subrayado/trazo del título "Acta de Reunión" */
-        .img-garabato-1 {
-            position: absolute;
-            bottom: -12px;
-            right: -25px;
-            width: 170px;
-            z-index: -1;
-            pointer-events: none;
-        }
-
-        .meta-datos {
-            margin-top: 15px;
-            font-size: 16px;
-            line-height: 1.5;
-        }
-
-        .fila-seccion {
-            display: flex;
-            margin-top: 40px;
-            align-items: flex-start;
-        }
-
-        .columna-izquierda {
-            width: 35%;
-            padding-right: 20px;
-        }
-
-        .columna-izquierda h3 {
-            font-size: 18px;
-            line-height: 1.4;
-            margin: 0;
-        }
-
-        .columna-derecha {
-            width: 65%;
-        }
-
-        .columna-derecha ul {
-            margin: 0;
-            padding-left: 20px;
-            line-height: 1.6;
-        }
-
-        .columna-derecha li {
-            margin-bottom: 12px;
-        }
-
-        /* 2. garabato_2.png -> Óvalo en "Temas Tratados" */
-        .img-garabato-2 {
-            position: absolute;
-            top: 50%;
-            left: 50%;
-            transform: translate(-50%, -50%);
-            width: 145%;
-            height: 140%;
-            z-index: -1;
-            pointer-events: none;
-        }
-
-        /* 3. garabato_3.png -> Flecha en "Pendientes a realizar" */
-        .img-garabato-3 {
-            position: absolute;
-            top: 20%;
-            right: -90px;
-            width: 75px;
-            z-index: -1;
-            pointer-events: none;
-        }
-
-        /* 4. garabato_4.png -> Subrayado en "Acciones acordadas próximo encuentro" */
-        .img-garabato-4 {
-            position: absolute;
-            bottom: -15px;
-            left: -10px;
-            width: 125%;
-            z-index: -1;
-            pointer-events: none;
-        }
-
-        .footer {
-            margin-top: 60px;
-            text-align: right;
-            font-size: 14px;
-            color: #555;
-        }
-    </style>
+    <title>Generador de Folletos Profesionales</title>
+    <!-- Librerías para exportar PDF y Word -->
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/html2canvas/1.4.1/html2canvas.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/docx@8.5.0/build/index.umd.min.js"></script>
+    <link rel="stylesheet" href="css/style.css">
 </head>
 <body>
 
-    <div class="container">
-        <!-- Encabezado del Acta -->
-        <div class="header">
-            <div class="titulo-container">
-                <h1>Acta de Reunión</h1>
-                <img src="img/garabato_1.png" alt="" class="img-garabato-1">
-            </div>
-            <div class="meta-datos">
-                <p><strong>Fecha:</strong> 05/10/2026</p>
-                <p><strong>Consultoría:</strong> SM Consultores</p>
-                <p><strong>Proceso:</strong> Operaciones</p>
-            </div>
-        </div>
+    <!-- Panel de Edición Lateral -->
+    <div id="panel">
+        <h1>Generador de Folletos</h1>
+        <p class="sub">Personaliza los campos. La vista previa en formato A4 se actualizará automáticamente.</p>
 
-        <!-- Sección 1: Temas Tratados -->
-        <div class="fila-seccion">
-            <div class="columna-izquierda">
-                <h3>
-                    Temas<br>Tratados
-                    <img src="img/garabato_2.png" alt="" class="img-garabato-2">
-                </h3>
-            </div>
-            <div class="columna-derecha">
-                <ul>
-                    <li>Monitoreo del proceso de elaboración del packing vs. pedido.</li>
-                    <li>Revisión y seguimiento de los registros de desvíos, identificando tendencias, causas recurrentes y oportunidades de mejora.</li>
-                    <li>Capacitación en herramientas de análisis de causas, aplicando Diagrama de Ishikawa y 5 Porqués para la identificación de causas raíz y definición de acciones correctivas.</li>
-                </ul>
-            </div>
-        </div>
+        <fieldset>
+            <legend>Encabezado y Títulos</legend>
+            <label>Título Principal</label>
+            <input type="text" id="inputTitulo" value="Servicios Profesionales" placeholder="Ej: Consultoría Especializada">
 
-        <!-- Sección 2: Pendientes a realizar -->
-        <div class="fila-seccion">
-            <div class="columna-izquierda">
-                <h3>
-                    Pendientes a<br>realizar
-                    <img src="img/garabato_3.png" alt="" class="img-garabato-3">
-                </h3>
-            </div>
-            <div class="columna-derecha">
-                <ul>
-                    <li>Orden y limpieza del área de Depósito, aplicando criterios de organización, seguridad y eficiencia.</li>
-                    <li>Relevamiento y actualización de los registros bromatológicos, asegurando su vigencia, trazabilidad y correcta gestión documental.</li>
-                </ul>
-            </div>
-        </div>
+            <label>Subtítulo / Especialidad</label>
+            <input type="text" id="inputSubtitulo" value="Excelencia y Compromiso en cada Solución">
+        </fieldset>
 
-        <!-- Sección 3: Acciones acordadas próximo encuentro -->
-        <div class="fila-seccion">
-            <div class="columna-izquierda">
-                <h3>
-                    Acciones<br>acordadas<br>próximo<br>encuentro
-                    <img src="img/garabato_4.png" alt="" class="img-garabato-4">
-                </h3>
-            </div>
-            <div class="columna-derecha">
-                <ul>
-                    <li>Diseño y revisión del proceso de packing y preparación de pedidos.</li>
-                    <li>Identificación de puntos de control críticos y oportunidades de mejora.</li>
-                    <li>Revisión de los KPI actuales y definición de nuevos indicadores de gestión.</li>
-                    <li>Estandarización de criterios de trabajo y controles.</li>
-                    <li>Identificación de acciones orientadas a mejorar la eficiencia, trazabilidad y calidad operativa.</li>
-                </ul>
-            </div>
-        </div>
+        <fieldset>
+            <legend>Secciones de Contenido</legend>
+            <label>Descripción del Perfil / Introducción</label>
+            <textarea id="inputIntro" rows="3">Brindamos soluciones integrales adaptadas a las necesidades específicas de nuestros clientes, garantizando calidad, profesionalismo y resultados óptimos.</textarea>
 
-        <!-- Firma / Pie de página -->
-        <div class="footer">
-            Elabora: Lic. Shalon Morales
+            <label>Áreas de Especialización (separadas por coma)</label>
+            <input type="text" id="inputTemas" value="Asesoramiento Estratégico, Desarrollo Técnico, Gestión de Proyectos, Soporte Especializado">
+        </fieldset>
+
+        <fieldset>
+            <legend>Datos de Contacto</legend>
+            <div class="row2">
+                <div><label>Teléfono / Celular</label><input type="text" id="inputTel" value="099 123 456"></div>
+                <div><label>Correo Electrónico</label><input type="text" id="inputEmail" value="contacto@estudio.com"></div>
+            </div>
+            <label>Ubicación / Dirección</label>
+            <input type="text" id="inputUbicacion" value="Montevideo, Uruguay">
+        </fieldset>
+
+        <!-- Botonera de Acciones -->
+        <div class="btn-toolbar" id="actions">
+            <button class="btn btn-primary" id="btnPdf">Descargar PDF</button>
+            <button class="btn btn-secondary" id="btnWord">Descargar Word</button>
         </div>
     </div>
 
+    <!-- Vista Previa / Lienzo A4 -->
+    <div id="previewWrap">
+        <div class="page" id="page1">
+            
+            <!-- Encabezado con Adorno PNG 4 (Subrayado principal) -->
+            <div class="seccion-titulo-wrapper">
+                <h1 id="prevTitulo">Servicios Profesionales</h1>
+                <img src="img/garabato_4.png" alt="Adorno Título" class="adorno-trazo" id="img-deco-titulo">
+            </div>
+            <h2 id="prevSubtitulo">Excelencia y Compromiso en cada Solución</h2>
+
+            <!-- Introducción con Adorno PNG 2 (Circular / Marco) -->
+            <div class="bloque-destacado">
+                <img src="img/garabato_2.png" alt="Adorno Circular" class="adorno-trazo" id="img-deco-circular">
+                <p id="prevIntro">Brindamos soluciones integrales adaptadas a las necesidades específicas de nuestros clientes, garantizando calidad, profesionalismo y resultados óptimos.</p>
+            </div>
+
+            <!-- Sección de Temas con Adorno PNG 1 (Diagonal) -->
+            <div class="bloque-temas">
+                <img src="img/garabato_1.png" alt="Adorno Temas" class="adorno-trazo" id="img-deco-temas">
+                <h3>Áreas de Especialización</h3>
+                <ul id="prevTemasLista">
+                    <li>Asesoramiento Estratégico</li>
+                    <li>Desarrollo Técnico</li>
+                    <li>Gestión de Proyectos</li>
+                    <li>Soporte Especializado</li>
+                </ul>
+            </div>
+
+            <!-- Indicador con Adorno PNG 3 (En Z / Flecha) -->
+            <div class="bloque-indicador">
+                <img src="img/garabato_3.png" alt="Adorno Z" class="adorno-trazo" id="img-deco-z">
+                <div class="contacto-info">
+                    <p><strong>Teléfono:</strong> <span id="prevTel">099 123 456</span></p>
+                    <p><strong>Email:</strong> <span id="prevEmail">contacto@estudio.com</span></p>
+                    <p><strong>Ubicación:</strong> <span id="prevUbicacion">Montevideo, Uruguay</span></p>
+                </div>
+            </div>
+
+            <div class="page-number">1</div>
+        </div>
+    </div>
+
+    <script src="js/main.js"></script>
 </body>
 </html>
