@@ -135,7 +135,10 @@ const EJEMPLO = {
                     img.style.display = 'block';
                     img.style.left = (d.caja.x + e.dx) + 'px';
                     img.style.top = (d.caja.y + e.dy + y) + 'px';
-                    img.style.width = (d.caja.w * e.esc / 100) + 'px';
+                    // Ancho y alto explícitos (calculados con las proporciones del PNG): así el PDF no depende de cómo cada navegador resuelva "height:auto"
+                    const w = d.caja.w * e.esc / 100;
+                    img.style.width = w + 'px';
+                    img.style.height = img.naturalWidth ? (w * img.naturalHeight / img.naturalWidth) + 'px' : 'auto';
                     g.style.display = 'none';
                 } else {
                     img.style.display = 'none';
@@ -158,8 +161,8 @@ const EJEMPLO = {
                 div.innerHTML = `
                     <div class="text-xs font-bold text-slate-700 mb-2">${d.nombre}</div>
                     <input type="file" accept="image/png,image/svg+xml,image/*" onchange="cargarAdorno('${k}', this)" class="w-full text-xs text-slate-500 file:mr-3 file:py-1.5 file:px-3 file:rounded-lg file:border-0 file:text-xs file:font-semibold file:bg-amber-50 file:text-amber-700 hover:file:bg-amber-100">
-                    ${e.src ? sl('dx', 'Mover horizontal (px)', -300, 300) + sl('dy', 'Mover vertical (px)', -300, 300) + sl('esc', 'Tamaño (%)', 20, 300) + `
-                    <button onclick="quitarAdorno('${k}')" class="mt-2 text-xs text-rose-600 hover:text-rose-700 font-semibold"><i class="fa-solid fa-trash-can"></i> Restaurar adorno original</button>` : ''}`;
+                    ${e.src ? `<details class="mt-2"><summary class="text-xs font-semibold text-amber-700 cursor-pointer">Ajustar posición y tamaño</summary>` + sl('dx', 'Mover horizontal (px)', -300, 300) + sl('dy', 'Mover vertical (px)', -300, 300) + sl('esc', 'Tamaño (%)', 20, 300) + `
+                    <button onclick="quitarAdorno('${k}')" class="mt-2 text-xs text-rose-600 hover:text-rose-700 font-semibold"><i class="fa-solid fa-rotate-left"></i> Restaurar adorno original</button></details>` : ''}`;
                 c.appendChild(div);
             });
         }
@@ -210,6 +213,8 @@ const EJEMPLO = {
             let host, parche;
             try {
                 await document.fonts.ready;
+                // Esperar a que los adornos y el logo estén cargados antes de medir y dibujar
+                await Promise.all([...document.querySelectorAll('#acta-preview img')].filter(i => i.getAttribute('src')).map(i => i.decode().catch(() => {})));
                 posicionarDecoraciones();
                 // Evita que los estilos globales (Tailwind) desplacen el texto al dibujar el PDF
                 parche = document.createElement('style');
@@ -335,6 +340,7 @@ const EJEMPLO = {
         }
 
         window.onload = function () {
+            document.querySelectorAll('.acta-deco-img').forEach(i => i.addEventListener('load', posicionarDecoraciones));
             renderEditors();
             renderAdornos();
             updatePreview();
