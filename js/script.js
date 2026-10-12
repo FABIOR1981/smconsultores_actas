@@ -1,4 +1,4 @@
-// Sincronización en tiempo real
+// Sincronización en tiempo real999
 const campos = ['titulo', 'fecha', 'lugar', 'participantes', 'temas', 'acuerdos', 'firma1', 'firma2'];
 
 campos.forEach(campo => {
