@@ -4,13 +4,10 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Generador de Actas de Reunión</title>
-    
     <!-- Tailwind CSS para los estilos del panel -->
     <script src="https://cdn.tailwindcss.com"></script>
-    
     <!-- Fuentes de Google -->
     <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600&family=Montserrat:ital,wght@0,300;0,400;0,600;1,400&display=swap" rel="stylesheet">
-    
     <!-- FontAwesome para iconos -->
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
     
@@ -20,8 +17,8 @@
     <script src="https://unpkg.com/docx@7.3.0/build/index.js"></script>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/FileSaver.js/2.0.5/FileSaver.min.js"></script>
 
-    <!-- Archivo de estilos separado -->
-    <link rel="stylesheet" href="css/style.css">
+    <!-- Archivo de estilos -->
+    <link rel="stylesheet" href="style.css">
 </head>
 <body class="h-screen flex overflow-hidden">
 
@@ -105,7 +102,7 @@
     <div class="w-2/3 bg-gray-200 overflow-y-auto p-8 flex justify-center">
         
         <div id="document-preview" class="a4-container">
-            <!-- GARABATOS PRECARGADOS DESDE CARPETA img/ -->
+            <!-- GARABATOS PRECARGADOS (Buscarán los archivos en la misma carpeta) -->
             <img src="img/garabato_1.png" alt="" class="garabato garabato-1" onerror="this.style.display='none'">
             <img src="img/garabato_2.png" alt="" class="garabato garabato-2" onerror="this.style.display='none'">
             <img src="img/garabato_3.png" alt="" class="garabato garabato-3" onerror="this.style.display='none'">
@@ -143,7 +140,7 @@
         </div>
     </div>
 
-    <!-- Archivo de JavaScript separado -->
-    <script src="js/script.js"></script>
+    <!-- Archivo de JavaScript -->
+    <script src="script.js"></script>
 </body>
 </html>

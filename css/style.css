@@ -31,8 +31,7 @@ body {
 .garabato {
     position: absolute;
     opacity: 0.8;
-    pointer-events: none; /* Para que no interfieran con el texto o clics */
-    z-index: 10;
+    pointer-events: none; /* Para que no interfieran con el texto */
 }
 .garabato-1 { top: 10mm; right: 10mm; width: 60px; }
 .garabato-2 { top: 60mm; left: 10mm; width: 50px; }
