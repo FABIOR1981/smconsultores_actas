@@ -264,7 +264,39 @@ const EJEMPLO = {
         }
 
         // Word: misma estructura de dos columnas que la imagen (el garabato amarillo solo existe en el PDF)
+        // Devuelve los bytes de una imagen, venga embebida (data:) o desde un archivo (img/logo_marley.png)
+        async function bytesDeImagen(img) {
+            const src = img.src;
+            if (src.startsWith('data:')) return dataUrlABytes(src);
+            try { const r = await fetch(src); if (r.ok) return new Uint8Array(await r.arrayBuffer()); } catch (e) { /* sigue */ }
+            try {
+                const c = document.createElement('canvas');
+                c.width = img.naturalWidth; c.height = img.naturalHeight;
+                c.getContext('2d').drawImage(img, 0, 0);
+                return dataUrlABytes(c.toDataURL('image/png'));
+            } catch (e) { return null; }
+        }
+
+        // Carga un script externo bajo demanda (respaldo si el CDN principal falla)
+        function cargarScript(url) {
+            return new Promise((ok, mal) => {
+                const s = document.createElement('script');
+                s.src = url; s.onload = ok; s.onerror = () => mal(new Error('No se pudo cargar ' + url));
+                document.head.appendChild(s);
+            });
+        }
+
+        function descargarBlob(blob, nombre) {
+            const url = URL.createObjectURL(blob);
+            const a = document.createElement('a');
+            a.href = url; a.download = nombre;
+            document.body.appendChild(a); a.click();
+            setTimeout(() => { document.body.removeChild(a); URL.revokeObjectURL(url); }, 1500);
+        }
+
         async function exportToDocx() {
+            if (!window.docx) { try { await cargarScript('https://unpkg.com/docx@7.8.2/build/index.js'); } catch (e) { console.error(e); } }
+            if (!window.docx) { alert('No se pudo cargar la librería para generar el Word. Revisá tu conexión e intentá de nuevo.'); return; }
             const { Document, Packer, Paragraph, TextRun, Table, TableRow, TableCell, WidthType, BorderStyle, AlignmentType, ImageRun } = window.docx;
             const F = "Montserrat";
             const none = { style: BorderStyle.NONE, size: 0, color: "FFFFFF" };
@@ -274,6 +306,7 @@ const EJEMPLO = {
             const logo = document.getElementById('prev-logo');
             const ratio = (logo.naturalHeight / logo.naturalWidth) || 1;
             const logoW = 118;
+            const logoBytes = await bytesDeImagen(logo);
 
             const cabecera = new Table({
                 width: { size: 9411, type: WidthType.DXA },
@@ -281,7 +314,7 @@ const EJEMPLO = {
                 borders: tablaBordes,
                 rows: [new TableRow({ children: [
                     new TableCell({ width: { size: 2865, type: WidthType.DXA }, borders: sinBordes, children: [
-                        new Paragraph({ children: [ new ImageRun({ data: dataUrlABytes(logo.src), transformation: { width: logoW, height: Math.round(logoW * ratio) } }) ] })
+                        new Paragraph({ children: logoBytes ? [ new ImageRun({ data: logoBytes, transformation: { width: logoW, height: Math.round(logoW * ratio) } }) ] : [ new TextRun('') ] })
                     ]}),
                     new TableCell({ width: { size: 6546, type: WidthType.DXA }, borders: sinBordes, children: [
                         new Paragraph({ spacing: { before: 120, after: 200 }, children: [ new TextRun({ text: actaData.titulo, bold: true, font: F, size: 54 }) ] }),
@@ -332,7 +365,7 @@ const EJEMPLO = {
 
             try {
                 const blob = await Packer.toBlob(doc);
-                saveAs(blob, `Acta_Reunion_${actaData.fecha.replace(/\//g, '-')}.docx`);
+                descargarBlob(blob, `Acta_Reunion_${actaData.fecha.replace(/\//g, '-')}.docx`);
             } catch (error) {
                 console.error(error);
                 alert("Error al generar el documento Word.");
