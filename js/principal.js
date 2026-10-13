@@ -297,7 +297,7 @@ const EJEMPLO = {
         async function exportToDocx() {
             if (!window.docx) { try { await cargarScript('https://unpkg.com/docx@7.8.2/build/index.js'); } catch (e) { console.error(e); } }
             if (!window.docx) { alert('No se pudo cargar la librería para generar el Word. Revisá tu conexión e intentá de nuevo.'); return; }
-            const { Document, Packer, Paragraph, TextRun, Table, TableRow, TableCell, WidthType, BorderStyle, AlignmentType, ImageRun } = window.docx;
+            const { Document, Packer, Paragraph, TextRun, Table, TableRow, TableCell, WidthType, BorderStyle, AlignmentType, ImageRun, HorizontalPositionRelativeFrom, VerticalPositionRelativeFrom, TextWrappingType, LineRuleType } = window.docx;
             const F = "Montserrat";
             const none = { style: BorderStyle.NONE, size: 0, color: "FFFFFF" };
             const sinBordes = { top: none, bottom: none, left: none, right: none };
@@ -308,6 +308,38 @@ const EJEMPLO = {
             const logoW = 118;
             const logoBytes = await bytesDeImagen(logo);
 
+            // Garabatos: imágenes flotantes detrás del texto, ancladas al título o a la etiqueta de cada sección
+            const EMU_PX = 7560000 / 1545;            // 1 px de la hoja (1545 px = 210 mm) en EMU
+            const PX_WORD = (210 / 25.4 * 96) / 1545;  // 1 px de la hoja en px de Word (96 dpi)
+            // xCelda: borde izquierdo de la celda donde está anclado (Word 2013+ mide la posición desde la celda)
+            async function adornoWord(clave, yAncla, xCelda) {
+                const e = decoEstado[clave], d = DECO[clave];
+                if (!e.src) return null;
+                const img = document.getElementById('img-deco-' + clave);
+                const bytes = await bytesDeImagen(img);
+                if (!bytes || !img.naturalWidth) return null;
+                const w = d.caja.w * e.esc / 100;
+                return new ImageRun({
+                    data: bytes,
+                    transformation: { width: Math.round(w * PX_WORD), height: Math.round(w * img.naturalHeight / img.naturalWidth * PX_WORD) },
+                    floating: {
+                        horizontalPosition: { relative: HorizontalPositionRelativeFrom.PAGE, offset: Math.round((d.caja.x + e.dx - xCelda) * EMU_PX) },
+                        verticalPosition: { relative: VerticalPositionRelativeFrom.PARAGRAPH, offset: Math.round((d.caja.y + e.dy - yAncla) * EMU_PX) },
+                        behindDocument: true,
+                        allowOverlap: true,
+                        layoutInCell: false,
+                        wrap: { type: TextWrappingType.NONE }
+                    }
+                });
+            }
+            const XCELDA_ETIQUETA = 155, XCELDA_TITULO = 527;
+            const adornos = {
+                titulo: await adornoWord('titulo', 182, XCELDA_TITULO),
+                temas: await adornoWord('temas', 528, XCELDA_ETIQUETA),
+                pendientes: await adornoWord('pendientes', 1012, XCELDA_ETIQUETA),
+                acciones: await adornoWord('acciones', 1362, XCELDA_ETIQUETA)
+            };
+
             const cabecera = new Table({
                 width: { size: 9411, type: WidthType.DXA },
                 columnWidths: [2865, 6546],
@@ -316,8 +348,8 @@ const EJEMPLO = {
                     new TableCell({ width: { size: 2865, type: WidthType.DXA }, borders: sinBordes, children: [
                         new Paragraph({ children: logoBytes ? [ new ImageRun({ data: logoBytes, transformation: { width: logoW, height: Math.round(logoW * ratio) } }) ] : [ new TextRun('') ] })
                     ]}),
-                    new TableCell({ width: { size: 6546, type: WidthType.DXA }, borders: sinBordes, children: [
-                        new Paragraph({ spacing: { before: 120, after: 200 }, children: [ new TextRun({ text: actaData.titulo, bold: true, font: F, size: 54 }) ] }),
+                    new TableCell({ width: { size: 6546, type: WidthType.DXA }, borders: sinBordes, margins: { top: 120, marginUnitType: WidthType.DXA }, children: [
+                        new Paragraph({ spacing: { after: 200 }, children: [ ...(adornos.titulo ? [adornos.titulo] : []), new TextRun({ text: actaData.titulo, bold: true, font: F, size: 54 }) ] }),
                         new Paragraph({ spacing: { after: 40 }, children: [ new TextRun({ text: `Fecha: ${actaData.fecha}`, font: F, size: 24 }) ] }),
                         new Paragraph({ spacing: { after: 40 }, children: [ new TextRun({ text: `Consultoría: ${actaData.consultoria}`, font: F, size: 24 }) ] }),
                         new Paragraph({ children: [ new TextRun({ text: `Proceso: ${actaData.proceso}`, font: F, size: 24 }) ] })
@@ -328,18 +360,18 @@ const EJEMPLO = {
             function filaSeccion(clave) {
                 const lineas = ETIQUETAS[clave];
                 const etiqueta = new Paragraph({
-                    spacing: { before: 480 },
-                    children: lineas.map((t, i) => new TextRun({ text: t, bold: true, font: F, size: 24, break: i === 0 ? 0 : 1 }))
+                    spacing: { line: 350, lineRule: LineRuleType.EXACT },
+                    children: [ ...(adornos[clave] ? [adornos[clave]] : []), ...lineas.map((t, i) => new TextRun({ text: t, bold: true, font: F, size: 24, break: i === 0 ? 0 : 1 })) ]
                 });
                 const viñetas = actaData[clave].map((t, i) => new Paragraph({
                     bullet: { level: 0 },
                     alignment: AlignmentType.JUSTIFIED,
-                    spacing: { before: i === 0 ? 480 : 0, after: 0, line: 340 },
+                    spacing: { before: 0, after: 0, line: 350, lineRule: LineRuleType.EXACT },
                     children: [ new TextRun({ text: t, font: F, size: 24, color: "1C1C1C" }) ]
                 }));
                 return new TableRow({ children: [
-                    new TableCell({ width: { size: 3085, type: WidthType.DXA }, borders: sinBordes, children: [etiqueta] }),
-                    new TableCell({ width: { size: 6326, type: WidthType.DXA }, borders: sinBordes, children: viñetas.length ? viñetas : [new Paragraph("")] })
+                    new TableCell({ width: { size: 3085, type: WidthType.DXA }, borders: sinBordes, margins: { top: 480, marginUnitType: WidthType.DXA }, children: [etiqueta] }),
+                    new TableCell({ width: { size: 6326, type: WidthType.DXA }, borders: sinBordes, margins: { top: 480, marginUnitType: WidthType.DXA }, children: viñetas.length ? viñetas : [new Paragraph("")] })
                 ]});
             }
 
