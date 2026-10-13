@@ -40,7 +40,7 @@
         </div>
     </header>
 
-    <main class="flex-1 w-full px-4 lg:px-8 py-4 md:py-6 grid grid-cols-1 lg:grid-cols-[minmax(380px,30%)_minmax(0,1fr)] 2xl:grid-cols-[minmax(420px,26%)_minmax(0,1fr)] gap-6 items-start">
+    <main class="flex-1 w-full px-4 lg:px-8 py-4 md:py-6 grid grid-cols-1 lg:grid-cols-[minmax(440px,38%)_minmax(0,1fr)] 2xl:grid-cols-[minmax(560px,34%)_minmax(0,1fr)] gap-6 items-start">
 
         <!-- PANEL DE EDICIÓN -->
         <section class="bg-white rounded-2xl shadow-xl border border-slate-200 p-6 no-print flex flex-col gap-6 sticky top-20 max-h-[calc(100vh-6rem)] overflow-y-auto">
@@ -110,11 +110,16 @@
                     <div id="editor-acciones" class="space-y-2"></div>
                 </div>
             </div>
-            <div class="space-y-4 pt-2 border-t border-slate-100">
-                <h3 class="text-xs font-bold uppercase tracking-wider text-slate-400">3. Adornos (PNG con fondo transparente)</h3>
-                <p class="text-xs text-slate-500">Cada adorno viene cargado. Podés reemplazarlo subiendo otro PNG, moverlo y cambiarle el tamaño.</p>
-                <div id="editor-adornos" class="space-y-4"></div>
-            </div>
+            <details class="seccion-colapsable pt-2 border-t border-slate-100">
+                <summary class="flex items-center justify-between cursor-pointer select-none py-1">
+                    <h3 class="text-xs font-bold uppercase tracking-wider text-slate-400">3. Adornos (PNG con fondo transparente)</h3>
+                    <i class="fa-solid fa-chevron-down chevron text-slate-400 text-xs"></i>
+                </summary>
+                <div class="space-y-4 mt-3">
+                    <p class="text-xs text-slate-500">Cada adorno viene cargado. Podés reemplazarlo subiendo otro PNG, moverlo y cambiarle el tamaño.</p>
+                    <div id="editor-adornos" class="space-y-4"></div>
+                </div>
+            </details>
         </section>
 
         <!-- VISTA PREVIA A4 -->

@@ -51,10 +51,10 @@ const EJEMPLO = {
             container.innerHTML = '';
             items.forEach((item, index) => {
                 const div = document.createElement('div');
-                div.className = 'flex items-center gap-2';
+                div.className = 'flex items-start gap-2';
                 div.innerHTML = `
-                    <input type="text" value="${escapeHtml(item)}" oninput="updateItem('${category}', ${index}, this.value)" class="w-full px-3 py-1.5 text-xs rounded-lg border border-slate-300 focus:ring-2 focus:ring-amber-500 focus:outline-none">
-                    <button onclick="removeItem('${category}', ${index})" class="text-slate-400 hover:text-rose-600 p-1.5 transition" title="Eliminar ítem">
+                    <textarea rows="3" oninput="updateItem('${category}', ${index}, this.value)" class="w-full px-3 py-2 text-sm leading-snug rounded-lg border border-slate-300 focus:ring-2 focus:ring-amber-500 focus:outline-none resize-y">${escapeHtml(item)}</textarea>
+                    <button onclick="removeItem('${category}', ${index})" class="text-slate-400 hover:text-rose-600 p-2 transition" title="Eliminar ítem">
                         <i class="fa-solid fa-trash-can text-xs"></i>
                     </button>`;
                 container.appendChild(div);
